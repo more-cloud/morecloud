@@ -1,0 +1,29 @@
+ 
+ssh root@192.168.1.1
+=================================================================
+lan and wan must be bridged device
+
+command:
+opkg update
+opkg remove dnsmasq
+rm /etc/config/dhcp
+opkg install dnsmasq-full
+=================================================================
+config dns server in web gui in network-> DHCP&DND->forwarder(tab)
+=================================================================
+command:
+opkg install kmod-nft-tproxy kmod-nft-socket
+
+wget -O passwall.pub https://master.dl.sourceforge.net/project/openwrt-passwall-build/passwall.pub
+opkg-key add passwall.pub
+
+. /etc/openwrt_release
+release="${DISTRIB_RELEASE%.*}"
+arch="$DISTRIB_ARCH"
+echo "src/gz passwall_packages https://master.dl.sourceforge.net/project/openwrt-passwall-build/releases/packages-$release/$arch/passwall_packages" >> /etc/opkg/customfeeds.conf
+echo "src/gz passwall2 https://master.dl.sourceforge.net/project/openwrt-passwall-build/releases/packages-$release/$arch/passwall2" >> /etc/opkg/customfeeds.conf
+
+opkg update
+opkg install luci-app-passwall2 v2ray-geosite-ir
+
+
