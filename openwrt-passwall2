@@ -1,15 +1,11 @@
- 
-ssh root@192.168.1.1
-=================================================================
-lan and wan must be bridged device
+openwrt-passwall2 installation:
 
-command:
 opkg update
 opkg remove dnsmasq
 rm /etc/config/dhcp
 opkg install dnsmasq-full
 =================================================================
-config dns server in web gui in network-> DHCP&DND->forwarder(tab)
+config dns server in web gui in network-> wan interface edit->advanced settings(tab)
 =================================================================
 command:
 opkg install kmod-nft-tproxy kmod-nft-socket
