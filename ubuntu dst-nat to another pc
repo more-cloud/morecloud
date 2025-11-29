@@ -1,0 +1,5 @@
+sysctl net.ipv4.ip_forward=1
+iptables -t nat -A PREROUTING -p udp -d 46.249.98.84 --dport 1701 -j DNAT --to-destination 192.168.122.254:1701
+iptables -t nat -A PREROUTING -p udp -d 46.249.98.84 --dport 4500 -j DNAT --to-destination 192.168.122.254:4500
+iptables -t nat -A PREROUTING -p udp -d 46.249.98.84 --dport 500 -j DNAT --to-destination 192.168.122.254:500
+iptables -t nat -A POSTROUTING ! -s 127.0.0.1 -j MASQUERADE
