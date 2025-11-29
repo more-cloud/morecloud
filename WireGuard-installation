@@ -1,0 +1,103 @@
+WireGuard installation and configuration:
+with this configs clients that connected to server do not have internet:
+
+1. sudo nano /root/wg-install.sh
+2. add this configs to wg-install.sh
+=================================================================================================
+#!/bin/bash
+# WireGuard Auto Installer + 10 Clients Config
+# Tested on Ubuntu 22.04/24.04
+# Author: Amin
+
+##########CONFIGS##########
+
+SERVER_PORT=51820
+SERVER_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)   # Server Public IP
+WG_INTERFACE=wg0
+WG_NETWORK=10.10.10.0/24
+CLIENT_COUNT=10
+CLIENT_DIR="/etc/wireguard/clients"
+
+##########WireGuard Installation##########
+
+echo "Installing WireGuard..."
+sudo apt update
+sudo apt install -y wireguard qrencode
+
+##########Clients Directory Creation##########
+
+mkdir -p $CLIENT_DIR
+
+##########Server Key Generation##########
+
+echo "Generating server keys..."
+SERVER_PRIVATE=$(wg genkey)
+SERVER_PUBLIC=$(echo $SERVER_PRIVATE | wg pubkey)
+
+##########Server Configuration File Creation##########
+
+echo "Creating server config..."
+SERVER_CONF="/etc/wireguard/$WG_INTERFACE.conf"
+cat > $SERVER_CONF <<EOF
+[Interface]
+Address = 10.10.10.1/24
+ListenPort = $SERVER_PORT
+PrivateKey = $SERVER_PRIVATE
+
+PostUp = iptables -A FORWARD -i $WG_INTERFACE -j DROP
+PostUp = iptables -A INPUT -i $WG_INTERFACE -j ACCEPT
+PostDown = iptables -D FORWARD -i $WG_INTERFACE -j DROP
+PostDown = iptables -D INPUT -i $WG_INTERFACE -j ACCEPT
+EOF
+
+##########Clients Config Generation##########
+
+echo "Creating $CLIENT_COUNT clients..."
+for i in $(seq 1 $CLIENT_COUNT); do
+    CLIENT_PRIV=$(wg genkey)
+    CLIENT_PUB=$(echo $CLIENT_PRIV | wg pubkey)
+    CLIENT_IP="10.10.10.$((i+1))"   # client1 → 10.10.10.2
+    CLIENT_CONF="$CLIENT_DIR/client$i.conf"
+
+    ##########Add Clients Config To Server Config##########
+
+    cat >> $SERVER_CONF <<EOF
+
+[Peer]
+PublicKey = $CLIENT_PUB
+AllowedIPs = $CLIENT_IP/32
+EOF
+
+    ##########Clients Config File Generation##########
+
+    cat > $CLIENT_CONF <<EOF
+[Interface]
+PrivateKey = $CLIENT_PRIV
+Address = $CLIENT_IP/32
+DNS = 1.1.1.1
+
+[Peer]
+PublicKey = $SERVER_PUBLIC
+Endpoint = $SERVER_IP:$SERVER_PORT
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 15
+EOF
+
+    echo "Client $i config created: $CLIENT_CONF"
+done
+
+##########Enabling Service##########
+
+echo "Enabling and starting WireGuard..."
+sudo systemctl enable wg-quick@$WG_INTERFACE
+sudo systemctl start wg-quick@$WG_INTERFACE
+
+echo "WireGuard setup complete!"
+echo "Server public key: $SERVER_PUBLIC"
+echo "Clients configs in: $CLIENT_DIR"
+
+=================================================================================================
+
+
+3. sudo chmod +x /root/wg-install.sh
+4. sudo ./wg-install.sh
