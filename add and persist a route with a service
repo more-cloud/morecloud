@@ -1,0 +1,30 @@
+sudo nano /usr/local/bin/add-static-route.sh
+===============================================================
+#!/bin/bash
+ip route add 192.168.88.242 via 192.168.122.254 dev virbr0
+===============================================================
+sudo chmod +x /usr/local/bin/add-static-route.sh
+
+
+sudo nano /etc/systemd/system/static-route.service
+===============================================================
+[Unit]
+Description=Add persistent static route
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/add-static-route.sh
+RemainAfterExit=yes
+ExecStartPre=/bin/bash -c 'while ! ip link show virbr0 >/dev/null 2>&1; do sleep 1; done'
+
+[Install]
+WantedBy=multi-user.target
+===============================================================
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable static-route.service
+sudo systemctl start static-route.service
+systemctl status static-route.service
