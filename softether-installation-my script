@@ -1,0 +1,84 @@
+apt update && apt upgrade -y
+
+apt install lynx make gcc openssl -y
+
+wget https://github.com/SoftEtherVPN/SoftEtherVPN_Stable/releases/download/v4.44-9807-rtm/softether-vpnserver-v4.44-9807-rtm-2025.04.16-linux-x64-64bit.tar.gz
+
+tar xzvf softether-vpnserver-v4.44-9807-rtm-2025.04.16-linux-x64-64bit.tar.gz
+
+cd vpnserver
+
+make
+
+cd ..
+
+mv vpnserver /usr/local
+
+cd /usr/local/vpnserver/
+
+chmod 600 *
+
+chmod 700 vpnserver
+
+chmod 700 vpncmd
+
+vi /etc/init.d/vpnserver
+
+
+========================================================
+
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:             vpnserver
+# Required-Start:
+# Required-Stop:
+# Default-Start:        2 3 4 5
+# Default-Stop:
+# Short-Description:    SoftEtherVPNServer
+### END INIT INFO
+
+# chkconfig: 2345 99 01
+# description: SoftEther VPN Server
+DAEMON=/usr/local/vpnserver/vpnserver
+LOCK=/var/lock/subsys/vpnserver
+test -x $DAEMON || exit 0
+case "$1" in
+start)
+$DAEMON start
+touch $LOCK
+;;
+stop)
+$DAEMON stop
+rm $LOCK
+;;
+restart)
+$DAEMON stop
+sleep 3
+$DAEMON start
+;;
+*)
+echo "Usage: $0 {start|stop|restart}"
+exit 1
+esac
+exit 0
+========================================================
+
+
+mkdir /var/lock/subsys
+
+chmod 755 /etc/init.d/vpnserver && /etc/init.d/vpnserver start
+
+update-rc.d vpnserver defaults
+
+
+systemctl enable vpnserver.service
+
+cd /usr/local/vpnserver
+
+./vpncmd
+
+3
+
+check
+
+exit
