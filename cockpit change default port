@@ -1,0 +1,13 @@
+mkdir -p /etc/systemd/system/cockpit.socket.d/
+
+Create /etc/systemd/system/cockpit.socket.d/listen.conf
+
+[Socket]
+ListenStream=
+ListenStream=1234
+
+
+
+systemctl daemon-reload
+systemctl restart cockpit.socket
+
